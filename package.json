@@ -1,6 +1,6 @@
 {
     "name": "@enhanced-dom/webcomponent",
-    "version": "0.0.2",
+    "version": "0.0.3",
     "description": "Helpers for basic webcomponent rendering",
     "repository": "https://github.com/enhanced-dom/webcomponent.git",
     "main": "index.js",
