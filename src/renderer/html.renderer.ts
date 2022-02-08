@@ -1,15 +1,8 @@
 import castArray from 'lodash.castarray'
 
-import type { IRenderingEngine } from './renderer.types'
+import type { IRenderingEngine, IAbstractElement, ITemplate } from './renderer.types'
 import { UnknownStylesheetEvent, FailedNodeCloneEvent, FailedNodeInsertEvent, TemplateRenderErrorEvent } from './renderer.events'
 
-export interface IAbstractElement {
-  tag: string
-  attributes?: Record<string, any>
-  children?: (IAbstractElement | string)[]
-}
-
-export type ITemplate<T> = (args?: T) => IAbstractElement | IAbstractElement[]
 
 export class HtmlRenderer<T> implements IRenderingEngine {
   private _template: ITemplate<T>
@@ -37,41 +30,34 @@ export class HtmlRenderer<T> implements IRenderingEngine {
     }
   }
 
-  createElement = (ae?: IAbstractElement) => {
+  createElement = (ae?: IAbstractElement | string | null) => {
     if (ae == null) {
       return null
+    }
+    if (typeof ae === 'string') {
+      return ae
     }
 
     const { tag, attributes = {}, children = [] } = ae
 
-    const element = document.createElement(tag)
-
-    for (const attr in attributes) {
+    const serializedAttributes = Object.keys(attributes).reduce((acc, attr) => {
       if (typeof attributes[attr] === 'boolean') {
         if (attributes[attr]) {
-          element.setAttribute(attr, '')
+          acc[attr] = ''
         }
       } else if (attributes[attr] != null) {
-        element.setAttribute(attr, attributes[attr].toString())
+        acc[attr] = JSON.stringify(attributes[attr])
       }
-    }
-
-    const innerHtml = children
-      .filter((c) => c !== null)
-      .map((child) => {
-        if (typeof child === 'string') {
-          return child
-        }
-        return this.createElement(child).outerHTML
-      })
+      return acc
+    }, {})
+    
+    const innerHtml = this.createElements(children
+      .filter((c) => c !== null))
       .join('')
-    if (innerHtml !== '') {
-      element.innerHTML = innerHtml
-    }
-    return element
+    return `<${tag} ${Object.keys(serializedAttributes).map(k => `${k}=${serializedAttributes[k]}`).join(' ')}>${innerHtml}</${tag}>`
   }
 
-  createElements = (aes?: IAbstractElement[]) => {
+  createElements = (aes?: (string | IAbstractElement)[]) => {
     return aes?.map(this.createElement) ?? []
   }
 
@@ -83,13 +69,16 @@ export class HtmlRenderer<T> implements IRenderingEngine {
 
   getTemplateMarkup(args: T) {
     const abstractElements = castArray(this._template(args))
-    const renderedNodes = this.createElements(abstractElements).filter((n) => !!n)
-    return renderedNodes.length ? renderedNodes.map((n) => n.outerHTML).join('') : ''
+    const renderedNodes = this.createElements(abstractElements).filter(n => !!n)
+    return renderedNodes.length ? renderedNodes : ''
   }
 
-  getStylesMarkup() {
+  getStylesMarkup(node?: Element | ShadowRoot) {
     return Object.entries(this._stylesRepository)
       .map(([stylesheetName, stylesheetContents]) => {
+        if (node?.querySelector(`style[title="${stylesheetName}"]`)) {
+          return node?.querySelector(`style[title="${stylesheetName}"]`).outerHTML
+        }
         if (stylesheetContents) {
           return `<style title="${stylesheetName}">${stylesheetContents}</style>`
         } else {
@@ -115,7 +104,7 @@ export class HtmlRenderer<T> implements IRenderingEngine {
     }
     try {
       const templateMarkup = this.getTemplateMarkup(args)
-      const stylesMarkup = this.getStylesMarkup()
+      const stylesMarkup = this.getStylesMarkup(node)
       newNode.innerHTML = `${stylesMarkup}${templateMarkup}`
     } catch {
       document.dispatchEvent(new TemplateRenderErrorEvent({rendererName: this._name}))
