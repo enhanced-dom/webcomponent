@@ -1,14 +1,17 @@
 import castArray from 'lodash.castarray'
 
 import type { IRenderingEngine, IAbstractElement, ITemplate } from './renderer.types'
-import { UnknownStylesheetEvent, FailedNodeCloneEvent, FailedNodeInsertEvent, TemplateRenderErrorEvent } from './renderer.events'
+import { FailedNodeCloneEvent, FailedNodeInsertEvent, TemplateRenderErrorEvent } from './renderer.events'
+import { StylesheetsRepository } from '@enhanced-dom/css'
 
 
 export class HtmlRenderer<T> implements IRenderingEngine {
   private _template: ITemplate<T>
   private _fallback: ITemplate<T>
   private _name?: string
+  static eventEmitterType = '@enhanced-dom/htmlRenderer'
   private _stylesRepository: Record<string, string> = {}
+  private _stylesheetsRepository: StylesheetsRepository = new StylesheetsRepository(document)
 
   constructor(...args: [ITemplate<T>] | [ITemplate<T>, ITemplate<T>] | [string, ITemplate<T>] | [string, ITemplate<T>, ITemplate<T>]) {
     if (args.length === 1) {
@@ -28,6 +31,8 @@ export class HtmlRenderer<T> implements IRenderingEngine {
       this._template = args[0]
       this._fallback = args[1]
     }
+
+    this._stylesheetsRepository = new StylesheetsRepository(document, {type: HtmlRenderer.eventEmitterType, id: this._name})
   }
 
   createElement = (ae?: IAbstractElement | string | null) => {
@@ -82,9 +87,9 @@ export class HtmlRenderer<T> implements IRenderingEngine {
         if (stylesheetContents) {
           return `<style title="${stylesheetName}">${stylesheetContents}</style>`
         } else {
-          const stylesheetToAdopt = Array.from(document.styleSheets).find(s => s.title === stylesheetName)
+          
+          const stylesheetToAdopt = this._stylesheetsRepository.getStylesheet(stylesheetName)
           if (!stylesheetToAdopt) {
-            document.dispatchEvent(new UnknownStylesheetEvent(stylesheetName, {rendererName: this._name}))
             return ''
           }
           const stylesheetContentsToAdopt = Array.from(stylesheetToAdopt.cssRules).map(rule => rule.cssText).join('')
@@ -99,7 +104,7 @@ export class HtmlRenderer<T> implements IRenderingEngine {
     try {
       newNode = node.parentNode ? node.cloneNode(false) as Element : node
     } catch {
-      document.dispatchEvent(new FailedNodeCloneEvent({rendererName: this._name}))
+      document.dispatchEvent(new FailedNodeCloneEvent({emitter: {type: HtmlRenderer.eventEmitterType, id: this._name}}))
       return
     }
     try {
@@ -107,14 +112,14 @@ export class HtmlRenderer<T> implements IRenderingEngine {
       const stylesMarkup = this.getStylesMarkup(node)
       newNode.innerHTML = `${stylesMarkup}${templateMarkup}`
     } catch {
-      document.dispatchEvent(new TemplateRenderErrorEvent({rendererName: this._name}))
+      document.dispatchEvent(new TemplateRenderErrorEvent({emitter: {type: HtmlRenderer.eventEmitterType, id: this._name}}))
       newNode.innerHTML = this.getFallbackMarkup(args)
     }
    
     try {
       node.parentNode?.replaceChild(newNode, node)
     } catch {
-      document.dispatchEvent(new FailedNodeInsertEvent({rendererName: this._name}))
+      document.dispatchEvent(new FailedNodeInsertEvent({emitter: {type: HtmlRenderer.eventEmitterType, id: this._name}}))
       return
     }
   }

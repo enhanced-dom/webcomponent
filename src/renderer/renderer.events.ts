@@ -1,33 +1,20 @@
-export abstract class RendererEvent<T> extends CustomEvent<T> {
-    constructor(type: string, eventInitDict?: T) {
-        super(type, {detail: eventInitDict})
-    }
-}
-
-export class UnknownStylesheetEvent<T extends {rendererName?: string}> extends RendererEvent<{stylesheetName: string} & T> {
-    static type = 'UnknownStylesheet'
-    constructor(stylesheetName: string, context: T) {
-        super(UnknownStylesheetEvent.type, {stylesheetName, ...context})
-    }
-}
-
-export class FailedNodeCloneEvent<T extends {rendererName?: string}> extends RendererEvent<T> {
+export class FailedNodeCloneEvent<T extends { emitter: { type: string; id?: string } }> extends CustomEvent<T> {
     static type = 'FailedNodeCloneEvent'
     constructor(context?: T) {
-        super(FailedNodeCloneEvent.type, context)
+        super(FailedNodeCloneEvent.type, { detail: context })
     }
 }
 
-export class FailedNodeInsertEvent<T extends {rendererName?: string}> extends RendererEvent<T> {
+export class FailedNodeInsertEvent<T extends { emitter: { type: string; id?: string } }> extends CustomEvent<T> {
     static type = 'FailedNodeInsertEvent'
     constructor(context?: T) {
-        super(FailedNodeInsertEvent.type, context)
+        super(FailedNodeInsertEvent.type, { detail: context })
     }
 }
 
-export class TemplateRenderErrorEvent<T extends {rendererName?: string}> extends RendererEvent<T> {
+export class TemplateRenderErrorEvent<T extends { emitter: { type: string; id?: string } }> extends CustomEvent<T> {
     static type = 'TemplateRenderErrorEvent'
     constructor(context?: T) {
-        super(TemplateRenderErrorEvent.type, context)
+        super(TemplateRenderErrorEvent.type, { detail: context })
     }
 }

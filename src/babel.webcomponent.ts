@@ -6,5 +6,6 @@ HTMLElement = (function (OriginalHTMLElement) {
   }
   Object.setPrototypeOf(BabelHTMLElement, OriginalHTMLElement)
   Object.setPrototypeOf(BabelHTMLElement.prototype, OriginalHTMLElement.prototype)
+  BabelHTMLElement.eventEmitterType = '@enhanced-dom/webcomponent'
   return BabelHTMLElement
 })(HTMLElement) as unknown as typeof HTMLElement
