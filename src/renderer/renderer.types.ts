@@ -3,10 +3,23 @@ export interface IRenderingEngine {
   addStyle: (name: string, style?: string) => void
 }
 
-export interface IAbstractElement {
-  tag: string
-  attributes?: Record<string, any>
-  children?: (IAbstractElement | string)[]
+export interface IAbstractNodeBase {
+  // eslint-disable-next-line @typescript-eslint/naming-convention
+  _key?: string
 }
 
-export type ITemplate<T> = (args?: T) => IAbstractElement | IAbstractElement[]
+export interface IAbstractElement extends IAbstractNodeBase {
+  tag: string
+  attributes?: Record<string, any>
+  children?: IAbstractNode[]
+  content?: never
+}
+
+export interface IAbstractNonElement extends IAbstractNodeBase {
+  tag?: never
+  content: string | number | null
+}
+
+export type IAbstractNode = IAbstractElement | IAbstractNonElement
+
+export type ITemplate<T> = (args?: T) => IAbstractNode | IAbstractNode[]

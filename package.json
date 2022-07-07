@@ -1,15 +1,17 @@
 {
     "name": "@enhanced-dom/webcomponent",
-    "version": "0.0.6",
+    "version": "0.0.7",
     "description": "Helpers for basic webcomponent rendering",
     "repository": "https://github.com/enhanced-dom/webcomponent.git",
     "main": "index.js",
     "scripts": {
+        "postinstall": "@enhanced-dom-husky",
         "package": "cd dist && npm pack",
         "prebuild": "rimraf dist/*",
         "build": "tsc -p ./tsconfig.json",
-        "postbuild": "copyfiles package.json LICENSE.md README.md dist",
+        "postbuild": "copyfiles LICENSE.md README.md dist && @enhanced-dom-copy-packagejson",
         "publish": "npm run build",
+        "test": "jest --config test/jest.config.js",
         "lint": "eslint src/** --fix --config eslint.config.js"
     },
     "keywords": [],
@@ -20,11 +22,14 @@
         "lodash.castarray": "^4.4.0"
     },
     "devDependencies": {
-        "@enhanced-dom/lint": "^0.0.3",
-        "copyfiles": "^2.4.1",
-        "rimraf": "^3.0.2",
-        "typescript": "^4.2.2",
-        "@types/lodash.castarray": "^4.4.6"
+        "@enhanced-dom/build": "^0.0.1",
+        "@enhanced-dom/lint": "^0.0.7",
+        "@testing-library/dom": "^8.14.0",
+        "@testing-library/jest-dom": "^5.16.4",
+        "@types/lodash.castarray": "^4.4.6",
+        "jest-environment-jsdom": "^28.1.1",
+        "ts-jest": "^28.0.5",
+        "typescript": "^4.2.2"
     },
     "engines": {
         "node": ">=14.17.0",

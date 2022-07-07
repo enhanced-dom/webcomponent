@@ -1,4 +1,5 @@
 import './babel.webcomponent'
 export * from './renderer'
-export const SECTION_ID = 'data-enhanced-dom-section'
-export const EVENT_EMITTER_TYPE = '@enhanced-dom/webcomponent'
+export * from './constants'
+export { type ElementInternalsExtended as ElementInternals } from './internals.webcomponent'
+export * from './eventlistener.tracker'
