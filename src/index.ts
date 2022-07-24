@@ -1,5 +1,5 @@
 import './babel.webcomponent'
 export * from './renderer'
 export * from './constants'
-export { type ElementInternalsExtended as ElementInternals } from './internals.webcomponent'
+export type { ElementInternalsExtended as ElementInternals } from './internals.webcomponent'
 export * from './eventlistener.tracker'

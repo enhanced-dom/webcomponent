@@ -1,5 +1,5 @@
 import castArray from 'lodash.castarray'
-import { StylesheetsRepository } from '@enhanced-dom/css'
+import { StylesheetsRepository, STYLESHEET_ATTRIBUTE_NAME } from '@enhanced-dom/css'
 
 import type { IRenderingEngine, IAbstractNode, ITemplate, IAbstractElement } from './renderer.types'
 import { TemplateDiffErrorEvent, TemplateRenderErrorEvent } from './renderer.events'
@@ -49,9 +49,9 @@ export class HtmlRenderer<T> implements IRenderingEngine {
     this._stylesheetsRepository = new StylesheetsRepository(document, { type: HtmlRenderer.eventEmitterType, id: this._name })
   }
 
-  private _getAdoptedStylesheetContents = (title: string) => {
-    if (!title) return ''
-    const stylesheetToAdopt = this._stylesheetsRepository.getStylesheet(title)
+  private _getAdoptedStylesheetContents = (stylesheetName: string) => {
+    if (!stylesheetName) return ''
+    const stylesheetToAdopt = this._stylesheetsRepository.getStylesheet(stylesheetName)
     if (stylesheetToAdopt) {
       return Array.from(stylesheetToAdopt.cssRules)
         .map((rule) => rule.cssText)
@@ -99,7 +99,7 @@ export class HtmlRenderer<T> implements IRenderingEngine {
         }
       })
       if (tag === 'style' && !children.length) {
-        element.innerText = this._getAdoptedStylesheetContents(attributes.title)
+        element.innerText = this._getAdoptedStylesheetContents(attributes[STYLESHEET_ATTRIBUTE_NAME])
       }
 
       node = element
@@ -121,7 +121,7 @@ export class HtmlRenderer<T> implements IRenderingEngine {
       const stylesheetNode: IAbstractElement = {
         tag: 'style',
         attributes: {
-          title: stylesheetName,
+          [STYLESHEET_ATTRIBUTE_NAME]: stylesheetName,
         },
       }
       if (stylesheetContents) {
