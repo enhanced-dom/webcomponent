@@ -81,9 +81,11 @@ export class AbstractDomIncrementalDiff {
     childIdx: '#',
   }
 
-  private _lastElementVersion: IAbstractNode = null
-
-  diff(newElementVersion: IAbstractNode) {
+  diff(
+    newElementVersion: IAbstractNode,
+    oldElementVersion?: IAbstractNode,
+    attributeSerializer: (value?: any) => string = (value) => String(value),
+  ) {
     const operations: IAbstractDomOperation[] = []
 
     const actualDiff = (prevNode: IAbstractNode, currNode: IAbstractNode, parentPath = '') => {
@@ -96,11 +98,17 @@ export class AbstractDomIncrementalDiff {
           operations.push({ path: parentPath, type: AbstractDomOperationType.REPLACE, data: currNode })
         } else if (isAbstractElement(prevNode) && isAbstractElement(currNode)) {
           const prevNodeAttributeKeys = Object.keys(prevNode.attributes ?? {})
+          const lowerCasePrevNodeAttributeKeys = prevNodeAttributeKeys.map((k) => k.toLowerCase())
           const currNodeAttributeKeys = Object.keys(currNode.attributes ?? {})
-          const commonKeys = prevNodeAttributeKeys.filter((k) => currNodeAttributeKeys.includes(k))
-          const keysToRemove = prevNodeAttributeKeys.filter((k) => !currNodeAttributeKeys.includes(k))
-          const keysToAdd = currNodeAttributeKeys.filter((k) => !prevNodeAttributeKeys.includes(k))
-          const keysToModify = commonKeys.filter((k) => currNode.attributes[k] !== prevNode.attributes[k])
+          const lowerCaseCurrNodeAttributeKeys = currNodeAttributeKeys.map((k) => k.toLowerCase())
+          const commonCurrentKeys = currNodeAttributeKeys.filter((k) => lowerCasePrevNodeAttributeKeys.includes(k.toLowerCase()))
+          const commonPrevKeys = prevNodeAttributeKeys.filter((k) => lowerCaseCurrNodeAttributeKeys.includes(k.toLowerCase()))
+          const keysToRemove = prevNodeAttributeKeys.filter((k) => !lowerCaseCurrNodeAttributeKeys.includes(k.toLowerCase()))
+          const keysToAdd = currNodeAttributeKeys.filter((k) => !lowerCasePrevNodeAttributeKeys.includes(k.toLowerCase()))
+          const keysToModify = commonPrevKeys.filter((k) => {
+            const currentKey = commonCurrentKeys.find((ck) => ck.toLowerCase() === k.toLowerCase())
+            return attributeSerializer(currNode.attributes[currentKey]) !== attributeSerializer(prevNode.attributes[k])
+          })
           keysToAdd.forEach((k) =>
             operations.push({
               path: `${parentPath}${AbstractDomIncrementalDiff.separators.attribute}${k}`,
@@ -108,13 +116,14 @@ export class AbstractDomIncrementalDiff {
               data: currNode.attributes[k],
             }),
           )
-          keysToModify.forEach((k) =>
+          keysToModify.forEach((k) => {
+            const currentKey = commonCurrentKeys.find((ck) => ck.toLowerCase() === k.toLowerCase())
             operations.push({
               path: `${parentPath}${AbstractDomIncrementalDiff.separators.attribute}${k}`,
               type: AbstractDomOperationType.MODIFY,
-              data: currNode.attributes[k],
-            }),
-          )
+              data: currNode.attributes[currentKey],
+            })
+          })
           keysToRemove.forEach((k) =>
             operations.push({
               path: `${parentPath}${AbstractDomIncrementalDiff.separators.attribute}${k}`,
@@ -188,8 +197,7 @@ export class AbstractDomIncrementalDiff {
       }
     }
 
-    actualDiff(this._lastElementVersion, newElementVersion)
-    this._lastElementVersion = newElementVersion
+    actualDiff(oldElementVersion, newElementVersion)
     return operations
   }
 }

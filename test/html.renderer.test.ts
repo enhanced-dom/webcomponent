@@ -1,8 +1,8 @@
 import '@testing-library/jest-dom'
 import { HtmlRenderer, SECTION_ID, type IAbstractNode } from '../src'
 
-describe.only('html renderer', () => {
-  test.only('non-element', () => {
+describe('html renderer', () => {
+  test('non-element', () => {
     const ast1 = {
       content: 'aaa',
     }
@@ -61,7 +61,7 @@ describe.only('html renderer', () => {
     div.removeChild(span) // we remove child, but we don't tell the renderer we've removed it
 
     renderer.render(div, ast1)
-    expect(div.innerHTML).toEqual('') // new node was not created, because we think the dom still looks as it once did
+    expect(div.innerHTML).toEqual(`<span ${SECTION_ID}="aaa"></span>`) // new node was created again
   })
 
   test('matching elements - no children', () => {
@@ -90,11 +90,9 @@ describe.only('html renderer', () => {
     renderer.render(div, ast1)
     expect(div.innerHTML).toEqual(`<span ${SECTION_ID}="aaa" toremove="{&quot;lala&quot;:null}" tomodify="" toignore="3"></span>`)
     const span = div.querySelector('span')
-    span.setAttribute('test', 'should-not-do-complete-rerender')
+    span.setAttribute('test', 'should-remove-even-if-not-in-original-ast')
     renderer.render(div, ast2)
-    expect(div.innerHTML).toEqual(
-      `<span ${SECTION_ID}="aaa" tomodify="5" toignore="3" test="should-not-do-complete-rerender" toadd="4"></span>`,
-    )
+    expect(div.innerHTML).toEqual(`<span ${SECTION_ID}="aaa" tomodify="5" toignore="3" toadd="4"></span>`)
   })
 
   test('matching elements - with children', () => {
@@ -163,7 +161,7 @@ describe.only('html renderer', () => {
     slot.setAttribute('test', 'should-not-do-complete-rerender')
     renderer.render(div, ast2)
     expect(div.innerHTML).toEqual(
-      '<span test="should-not-do-complete-rerender">AA<span width="20"></span><div></div><div height="5"></div><slot name="aaa" test="should-not-do-complete-rerender" color="blue"></slot></span>',
+      '<span>AA<span width="20"></span><div></div><div height="5"></div><slot name="aaa" color="blue"></slot></span>',
     )
   })
 })

@@ -15,6 +15,7 @@ import {
   IReplaceOperation,
   isAbstractElement,
 } from './abstract.renderer'
+import { parseDom } from './html.parser'
 
 export class HtmlRenderer<T> implements IRenderingEngine {
   private _template: ITemplate<T>
@@ -222,16 +223,21 @@ export class HtmlRenderer<T> implements IRenderingEngine {
     }
   }
 
-  render(node: Element | ShadowRoot, args: T) {
+  render(node: Element | ShadowRoot | DocumentFragment, args: T) {
     let operations: IAbstractDomOperation[] = []
+    const existingAst = parseDom(node)
     try {
       const styleNodes = this._getAbstractStyleNodes()
       const templateNodes = this._getAbstractTemplateNodes(args)
-      operations = this._abstractDomDiff.diff({ tag: 'fragment', children: [...styleNodes, ...templateNodes] })
+      operations = this._abstractDomDiff.diff(
+        { ...existingAst, children: [...styleNodes, ...templateNodes] },
+        existingAst,
+        this._serializeAttributeValue,
+      )
     } catch {
       document.dispatchEvent(new TemplateDiffErrorEvent({ emitter: { type: HtmlRenderer.eventEmitterType, id: this._name } }))
       const fallbackNodes = this._getAbstractFallbackNodes(args)
-      operations = this._abstractDomDiff.diff({ tag: 'fragment', children: [...fallbackNodes] })
+      operations = this._abstractDomDiff.diff({ ...existingAst, children: [...fallbackNodes] }, existingAst, this._serializeAttributeValue)
     }
 
     try {

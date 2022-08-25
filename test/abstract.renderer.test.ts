@@ -67,20 +67,19 @@ describe('abstract dom diff', () => {
     }
 
     const diff = new AbstractDomIncrementalDiff()
-    let result = diff.diff(ast1)
+    let result = diff.diff(ast1, null)
     expect(result.length).toEqual(1)
     expect(result[0]).toEqual({ path: '', type: AbstractDomOperationType.ADD, data: ast1 })
 
-    result = diff.diff(ast2)
+    result = diff.diff(ast2, ast1)
     expect(result.length).toEqual(1)
     expect(result[0]).toEqual({ path: '', type: AbstractDomOperationType.REPLACE, data: ast2 })
 
-    diff.diff(ast2)
-    result = diff.diff(ast1)
+    result = diff.diff(ast1, ast2)
     expect(result.length).toEqual(1)
     expect(result[0]).toEqual({ path: '', type: AbstractDomOperationType.REPLACE, data: ast1 })
 
-    result = diff.diff(null)
+    result = diff.diff(null, ast1)
     expect(result.length).toEqual(1)
     expect(result[0]).toEqual({ path: '', type: AbstractDomOperationType.REMOVE })
   })
@@ -101,8 +100,7 @@ describe('abstract dom diff', () => {
     }
 
     const diff = new AbstractDomIncrementalDiff()
-    diff.diff(ast1)
-    const result = diff.diff(ast2)
+    const result = diff.diff(ast2, ast1)
     expect(result.length).toEqual(1)
     expect(result[0]).toEqual({ path: '', type: AbstractDomOperationType.REPLACE, data: ast2 })
   })
@@ -120,13 +118,10 @@ describe('abstract dom diff', () => {
     }
 
     const diff = new AbstractDomIncrementalDiff()
-    diff.diff(ast1)
-
-    let result = diff.diff(ast1)
+    let result = diff.diff(ast1, ast1)
     expect(result.length).toEqual(0)
 
-    diff.diff(ast2)
-    result = diff.diff(ast2)
+    result = diff.diff(ast2, ast2)
     expect(result.length).toEqual(0)
   })
 
@@ -152,9 +147,7 @@ describe('abstract dom diff', () => {
     }
 
     const diff = new AbstractDomIncrementalDiff()
-    diff.diff(ast1)
-
-    const result = diff.diff(ast2)
+    const result = diff.diff(ast2, ast1)
     expect(result.length).toEqual(3)
     expect(result.find((r) => r.path === '.toModify')).toEqual({ path: '.toModify', type: AbstractDomOperationType.MODIFY, data: 5 })
     expect(result.find((r) => r.path === '.toAdd')).toEqual({ path: '.toAdd', type: AbstractDomOperationType.MODIFY, data: 4 })
@@ -218,8 +211,7 @@ describe('abstract dom diff', () => {
     }
 
     const diff = new AbstractDomIncrementalDiff()
-    diff.diff(ast1)
-    const result = diff.diff(ast2)
+    const result = diff.diff(ast2, ast1)
     expect(result.length).toEqual(7)
     expect(result[0]).toEqual({ path: '/children#0.height', type: AbstractDomOperationType.MODIFY, data: 5 })
     expect(result[1]).toEqual({ path: '/children#1.width', type: AbstractDomOperationType.MODIFY, data: 20 })
@@ -251,13 +243,11 @@ describe('abstract dom diff', () => {
     }
 
     const diff = new AbstractDomIncrementalDiff()
-    diff.diff(ast1)
-    let result = diff.diff(ast2)
+    let result = diff.diff(ast2, ast1)
     expect(result.length).toEqual(1)
     expect(result[0]).toEqual({ path: '/children', type: AbstractDomOperationType.REMOVE })
 
-    diff.diff(ast1)
-    result = diff.diff(ast3)
+    result = diff.diff(ast3, ast1)
     expect(result.length).toEqual(1)
     expect(result[0]).toEqual({ path: '/children', type: AbstractDomOperationType.REMOVE })
   })
