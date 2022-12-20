@@ -1,5 +1,6 @@
 import './babel.webcomponent'
-export * from './renderer'
 export * from './constants'
 export type { ElementInternalsExtended as ElementInternals } from './internals.webcomponent'
-export * from './eventlistener.tracker'
+export type { IRenderingEngine, ITemplate, IRenderingEventContext, IHtmlRendererFactory } from './webcomponent.types'
+export * from './webcomponent.events'
+export * from './webcomponent.renderer'
