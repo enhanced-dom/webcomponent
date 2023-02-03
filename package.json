@@ -1,6 +1,6 @@
 {
   "name": "@enhanced-dom/webcomponent",
-  "version": "0.0.10",
+  "version": "0.0.11",
   "description": "Helpers for basic webcomponent rendering",
   "repository": "https://github.com/enhanced-dom/webcomponent.git",
   "main": "index.js",
@@ -18,7 +18,8 @@
   "author": "CD9B4A105290E17E0948E021DF4105107C88693C59C0B891CCC08366C51AEA990902A6A156AC87D88A2FC41422A5E1C3C4071F251F19441C4516000EC25F87DF",
   "license": "MIT",
   "dependencies": {
-    "@enhanced-dom/dom": "^0.0.1",
+    "@enhanced-dom/css": "^0.0.3",
+    "@enhanced-dom/dom": "^0.0.2",
     "lodash.castarray": "^4.4.0"
   },
   "devDependencies": {
@@ -26,7 +27,7 @@
     "@enhanced-dom/lint": "^0.0.7",
     "@enhanced-dom/jest": "^0.0.1",
     "@types/lodash.castarray": "^4.4.6",
-    "typescript": "^4.2.2"
+    "typescript": "^4.9.4"
   },
   "engines": {
     "node": ">=14.17.0",

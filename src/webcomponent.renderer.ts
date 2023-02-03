@@ -1,20 +1,29 @@
 import castArray from 'lodash.castarray'
 import { STYLESHEET_ATTRIBUTE_NAME } from '@enhanced-dom/css'
-import { isAbstractElement, StylesTracker, HtmlRenderer, IAbstractNode, IHtmlRenderer, IStylesTracker } from '@enhanced-dom/dom'
+import {
+  isAbstractElement,
+  StylesTracker,
+  HtmlRenderer,
+  IAbstractNode,
+  IHtmlRenderer,
+  IStylesTracker,
+  IAbstractElement,
+} from '@enhanced-dom/dom'
 
+import { INFERRED_STYLESHEET_NAME } from './constants'
 import type { IRenderingEngine, ITemplate, IHtmlRendererFactory } from './webcomponent.types'
 import { TemplateGenerationFallbackErrorEvent, TemplateGenerationMainErrorEvent } from './webcomponent.events'
 
-let htmlRenderer: IHtmlRendererFactory = HtmlRenderer
+let htmlRendererFactory: IHtmlRendererFactory = HtmlRenderer
 
 export const registerHtmlRenderer = (rendererType: IHtmlRendererFactory) => {
-  htmlRenderer = rendererType
+  htmlRendererFactory = rendererType
 }
 
 export class WebcomponentRenderer<T extends Record<string, any>> implements IRenderingEngine {
   private _template: ITemplate<T>
   private _fallback: ITemplate<T> = () => null
-  private _renderArgsCache?: [Element | ShadowRoot | DocumentFragment, T]
+  private _renderArgsCache?: [ShadowRoot | Document, T]
   private _stylesListenerId: string
   private _name = 'Unknown'
   private _htmlRenderer: IHtmlRenderer
@@ -37,7 +46,7 @@ export class WebcomponentRenderer<T extends Record<string, any>> implements IRen
     }
 
     this._stylesListenerId = WebcomponentRenderer.stylesTracker.registerListener(this.rerender)
-    this._htmlRenderer = new htmlRenderer(this._name)
+    this._htmlRenderer = new htmlRendererFactory(this._name)
   }
 
   private _getClassNames = (nodes?: IAbstractNode[]) => {
@@ -55,23 +64,9 @@ export class WebcomponentRenderer<T extends Record<string, any>> implements IRen
     return Array.from(classNames)
   }
 
-  private _getAbstractStyleNodes(templateNodes?: IAbstractNode[]): IAbstractNode[] {
+  private _getAdoptedStyles(templateNodes?: IAbstractNode[]): string {
     const classNamesFromTemplateNodes = this._getClassNames(templateNodes)
-    const stylesToCopy = WebcomponentRenderer.stylesTracker.getStyles(classNamesFromTemplateNodes, this._stylesListenerId)
-    return [
-      {
-        tag: 'style',
-        attributes: {
-          type: 'text/css',
-          [STYLESHEET_ATTRIBUTE_NAME]: `copied-styles-${JSON.stringify(classNamesFromTemplateNodes)}`,
-        },
-        children: [
-          {
-            content: stylesToCopy,
-          },
-        ],
-      },
-    ]
+    return WebcomponentRenderer.stylesTracker.getStyles(classNamesFromTemplateNodes, this._stylesListenerId)
   }
 
   private _getAbstractTemplateNodes(args: T): IAbstractNode[] {
@@ -82,13 +77,24 @@ export class WebcomponentRenderer<T extends Record<string, any>> implements IRen
     return castArray(this._fallback(args))
   }
 
-  render(node: Element | ShadowRoot | DocumentFragment, args: T) {
+  render(node: ShadowRoot | Document, args: T) {
     this._renderArgsCache = [node, args]
     let template: IAbstractNode[] = undefined
+    let adoptedStyles: string = undefined
     try {
-      const templateNodes = this._getAbstractTemplateNodes(args)
-      const styleNodes = this._getAbstractStyleNodes(templateNodes)
-      template = [...styleNodes, ...templateNodes]
+      template = this._getAbstractTemplateNodes(args)
+      adoptedStyles = this._getAdoptedStyles(template)
+      let headNode: IAbstractElement = template.find((n) => n.tag === 'head') as IAbstractElement
+      if (!headNode) {
+        headNode = { tag: 'head' }
+        template.unshift(headNode)
+      }
+      headNode.children = headNode.children ?? []
+      headNode.children.unshift({
+        tag: 'style',
+        attributes: { [STYLESHEET_ATTRIBUTE_NAME]: INFERRED_STYLESHEET_NAME },
+        children: [{ content: adoptedStyles }],
+      })
     } catch (mainTemplateException) {
       document.dispatchEvent(
         new TemplateGenerationMainErrorEvent({
@@ -100,6 +106,18 @@ export class WebcomponentRenderer<T extends Record<string, any>> implements IRen
       )
       try {
         template = this._getAbstractFallbackNodes(args)
+        adoptedStyles = this._getAdoptedStyles(template)
+        let headNode: IAbstractElement = template.find((n) => n.tag === 'head') as IAbstractElement
+        if (!headNode) {
+          headNode = { tag: 'head' }
+          template.unshift(headNode)
+        }
+        headNode.children = headNode.children ?? []
+        headNode.children.unshift({
+          tag: 'style',
+          attributes: { STYLESHEET_ATTRIBUTE_NAME: INFERRED_STYLESHEET_NAME },
+          children: [{ content: adoptedStyles }],
+        })
       } catch (fallbackTemplateException) {
         document.dispatchEvent(
           new TemplateGenerationFallbackErrorEvent({

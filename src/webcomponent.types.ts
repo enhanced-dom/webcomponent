@@ -1,7 +1,7 @@
 import type { IAbstractNode, IHtmlRenderer } from '@enhanced-dom/dom'
 
 export interface IRenderingEngine {
-  render: (node: Element | ShadowRoot | DocumentFragment, args?: Record<string, any>) => void
+  render: (node: ShadowRoot | Document, args?: Record<string, any>) => void
   cleanup: () => void
 }
 
