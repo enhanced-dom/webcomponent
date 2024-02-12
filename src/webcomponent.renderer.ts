@@ -4,10 +4,10 @@ import {
   isAbstractElement,
   StylesTracker,
   HtmlRenderer,
-  IAbstractNode,
-  IHtmlRenderer,
-  IStylesTracker,
-  IAbstractElement,
+  type IAbstractNode,
+  type IHtmlRenderer,
+  type IStylesTracker,
+  type IAbstractElement,
 } from '@enhanced-dom/dom'
 
 import { INFERRED_STYLESHEET_NAME } from './constants'

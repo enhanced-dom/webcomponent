@@ -1,5 +1,6 @@
+/* global ElementInternals */
 // https://github.com/microsoft/TypeScript/issues/33218
-export interface ElementInternalsExtended extends ElementInternals {
+export interface IElementInternalsExtended extends ElementInternals {
   readonly form: HTMLFormElement
   readonly validity: ValidityState
   readonly willValidate: boolean
