@@ -1,5 +1,4 @@
 export * from './constants'
-export type { IElementInternalsExtended as ElementInternals } from './internals.webcomponent'
 export type { IRenderingEngine, ITemplate, IRenderingEventContext, IHtmlRendererFactory } from './webcomponent.types'
 export * from './webcomponent.events'
 export * from './webcomponent.renderer'

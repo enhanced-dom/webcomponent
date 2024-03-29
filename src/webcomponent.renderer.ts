@@ -1,16 +1,6 @@
 import castArray from 'lodash.castarray'
-import { STYLESHEET_ATTRIBUTE_NAME } from '@enhanced-dom/css'
-import {
-  isAbstractElement,
-  StylesTracker,
-  HtmlRenderer,
-  type IAbstractNode,
-  type IHtmlRenderer,
-  type IStylesTracker,
-  type IAbstractElement,
-} from '@enhanced-dom/dom'
+import { HtmlRenderer, type IAbstractNode, type IHtmlRenderer } from '@enhanced-dom/dom'
 
-import { INFERRED_STYLESHEET_NAME } from './constants'
 import type { IRenderingEngine, ITemplate, IHtmlRendererFactory } from './webcomponent.types'
 import { TemplateGenerationFallbackErrorEvent, TemplateGenerationMainErrorEvent } from './webcomponent.events'
 
@@ -24,11 +14,9 @@ export class WebcomponentRenderer<T extends Record<string, any>> implements IRen
   private _template: ITemplate<T>
   private _fallback: ITemplate<T> = () => null
   private _renderArgsCache?: [ShadowRoot | Document, T]
-  private _stylesListenerId: string
   private _name = 'Unknown'
   private _htmlRenderer: IHtmlRenderer
   static eventEmitterType = '@enhanced-dom/webcomponentRenderer'
-  static stylesTracker: IStylesTracker = new StylesTracker()
 
   constructor(...args: [ITemplate<T>] | [ITemplate<T>, ITemplate<T>] | [string, ITemplate<T>] | [string, ITemplate<T>, ITemplate<T>]) {
     if (args.length === 1) {
@@ -45,28 +33,7 @@ export class WebcomponentRenderer<T extends Record<string, any>> implements IRen
       this._fallback = args[1]
     }
 
-    this._stylesListenerId = WebcomponentRenderer.stylesTracker.registerListener(this.rerender)
     this._htmlRenderer = new htmlRendererFactory(this._name)
-  }
-
-  private _getClassNames = (nodes?: IAbstractNode[]) => {
-    const classNames = new Set<string>()
-    nodes?.forEach((n) => {
-      if (isAbstractElement(n)) {
-        n.attributes?.class?.split(' ')?.forEach((className: string) => {
-          if (className !== '') {
-            classNames.add(className)
-          }
-        })
-        this._getClassNames(n.children).forEach((className: string) => classNames.add(className))
-      }
-    })
-    return Array.from(classNames)
-  }
-
-  private _getAdoptedStyles(templateNodes?: IAbstractNode[]): string {
-    const classNamesFromTemplateNodes = this._getClassNames(templateNodes)
-    return WebcomponentRenderer.stylesTracker.getStyles(classNamesFromTemplateNodes, this._stylesListenerId)
   }
 
   private _getAbstractTemplateNodes(args: T): IAbstractNode[] {
@@ -80,21 +47,8 @@ export class WebcomponentRenderer<T extends Record<string, any>> implements IRen
   render(node: ShadowRoot | Document, args: T) {
     this._renderArgsCache = [node, args]
     let template: IAbstractNode[] = undefined
-    let adoptedStyles: string = undefined
     try {
       template = this._getAbstractTemplateNodes(args)
-      adoptedStyles = this._getAdoptedStyles(template)
-      let headNode: IAbstractElement = template.find((n) => n.tag === 'head') as IAbstractElement
-      if (!headNode) {
-        headNode = { tag: 'head' }
-        template.unshift(headNode)
-      }
-      headNode.children = headNode.children ?? []
-      headNode.children.unshift({
-        tag: 'style',
-        attributes: { [STYLESHEET_ATTRIBUTE_NAME]: INFERRED_STYLESHEET_NAME },
-        children: [{ content: adoptedStyles }],
-      })
     } catch (mainTemplateException) {
       document.dispatchEvent(
         new TemplateGenerationMainErrorEvent({
@@ -106,18 +60,6 @@ export class WebcomponentRenderer<T extends Record<string, any>> implements IRen
       )
       try {
         template = this._getAbstractFallbackNodes(args)
-        adoptedStyles = this._getAdoptedStyles(template)
-        let headNode: IAbstractElement = template.find((n) => n.tag === 'head') as IAbstractElement
-        if (!headNode) {
-          headNode = { tag: 'head' }
-          template.unshift(headNode)
-        }
-        headNode.children = headNode.children ?? []
-        headNode.children.unshift({
-          tag: 'style',
-          attributes: { STYLESHEET_ATTRIBUTE_NAME: INFERRED_STYLESHEET_NAME },
-          children: [{ content: adoptedStyles }],
-        })
       } catch (fallbackTemplateException) {
         document.dispatchEvent(
           new TemplateGenerationFallbackErrorEvent({
@@ -145,7 +87,5 @@ export class WebcomponentRenderer<T extends Record<string, any>> implements IRen
     }
   }
 
-  cleanup() {
-    WebcomponentRenderer.stylesTracker.unregisterListener(this._stylesListenerId)
-  }
+  cleanup = () => {}
 }
