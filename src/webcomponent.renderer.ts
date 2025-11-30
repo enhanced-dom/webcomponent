@@ -13,7 +13,7 @@ export const registerHtmlRenderer = (rendererType: IHtmlRendererFactory) => {
 export class WebcomponentRenderer<T extends Record<string, any>> implements IRenderingEngine {
   private _template: ITemplate<T>
   private _fallback: ITemplate<T> = () => null
-  private _renderArgsCache?: [ShadowRoot | Document, T]
+  private _renderArgsCache?: [Node, T]
   private _name = 'Unknown'
   private _htmlRenderer: IHtmlRenderer
   static eventEmitterType = '@enhanced-dom/webcomponentRenderer'
@@ -44,7 +44,7 @@ export class WebcomponentRenderer<T extends Record<string, any>> implements IRen
     return castArray(this._fallback(args))
   }
 
-  render(node: ShadowRoot | Document, args: T) {
+  render(node: Node, args: T) {
     this._renderArgsCache = [node, args]
     let template: IAbstractNode[] = undefined
     try {
