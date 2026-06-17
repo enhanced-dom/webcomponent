@@ -1,7 +1,7 @@
-import castArray from 'lodash.castarray'
+import { castArray } from 'lodash-es'
 import { HtmlRenderer, type IAbstractNode, type IHtmlRenderer } from '@enhanced-dom/dom'
 
-import type { IRenderingEngine, ITemplate, IHtmlRendererFactory } from './webcomponent.types'
+import type { IRenderingEngine, ITemplate, IHtmlRendererFactory, WebcomponentRendererRootType } from './webcomponent.types'
 import { TemplateGenerationFallbackErrorEvent, TemplateGenerationMainErrorEvent } from './webcomponent.events'
 
 let htmlRendererFactory: IHtmlRendererFactory = HtmlRenderer
@@ -10,10 +10,10 @@ export const registerHtmlRenderer = (rendererType: IHtmlRendererFactory) => {
   htmlRendererFactory = rendererType
 }
 
-export class WebcomponentRenderer<T extends Record<string, any>> implements IRenderingEngine {
+export class WebcomponentRenderer<T extends Record<string, any>> implements IRenderingEngine<T> {
   private _template: ITemplate<T>
-  private _fallback: ITemplate<T> = () => null
-  private _renderArgsCache?: [Node, T]
+  private _fallback: ITemplate<T> = () => []
+  private _renderArgsCache?: [WebcomponentRendererRootType, T | undefined]
   private _name = 'Unknown'
   private _htmlRenderer: IHtmlRenderer
   static eventEmitterType = '@enhanced-dom/webcomponentRenderer'
@@ -36,17 +36,17 @@ export class WebcomponentRenderer<T extends Record<string, any>> implements IRen
     this._htmlRenderer = new htmlRendererFactory(this._name)
   }
 
-  private _getAbstractTemplateNodes(args: T): IAbstractNode[] {
+  private _getAbstractTemplateNodes(args?: T): IAbstractNode[] {
     return castArray(this._template(args))
   }
 
-  private _getAbstractFallbackNodes(args: T) {
+  private _getAbstractFallbackNodes(args?: T) {
     return castArray(this._fallback(args))
   }
 
-  render(node: Node, args: T) {
+  render(node: WebcomponentRendererRootType, args?: T) {
     this._renderArgsCache = [node, args]
-    let template: IAbstractNode[] = undefined
+    let template: IAbstractNode[] | null = null
     try {
       template = this._getAbstractTemplateNodes(args)
     } catch (mainTemplateException) {

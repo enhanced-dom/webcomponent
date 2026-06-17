@@ -1,7 +1,9 @@
 import type { IAbstractNode, IHtmlRenderer } from '@enhanced-dom/dom'
 
-export interface IRenderingEngine {
-  render: (node: ShadowRoot | Document, args?: Record<string, any>) => void
+export type WebcomponentRendererRootType = Element | ShadowRoot | DocumentFragment
+
+export interface IRenderingEngine<T extends Record<string, any> = Record<string, any>> {
+  render: (node: WebcomponentRendererRootType, args?: T) => void
   cleanup: () => void
 }
 
