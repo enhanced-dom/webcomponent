@@ -1,4 +1,3 @@
-/* global describe, it, beforeEach, expect, beforeAll */
 import '@testing-library/jest-dom'
 import { HtmlRenderer } from '@enhanced-dom/dom'
 
